@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
+import pickle
 
 # Define the ResNet-34 model
 class ResNet34(nn.Module):
@@ -28,16 +29,26 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
-train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+DATA_PATH = '../pickle/cifar10/resnet34/shadow.p'
+
+with open(DATA_PATH, "rb") as f:
+    train_dataset = pickle.load(f)
+
+DATA_PATH = '../pickle/cifar10/resnet34/eval.p'
+
+with open(DATA_PATH, "rb") as f:
+    test_dataset = pickle.load(f)
+
+# train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+# test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 # Initialize the model
 model = ResNet34().to(device)
 
 # Load pre-trained weights
-model.load_state_dict(torch.load("resnet34_cifar10.pth"))
+model.load_state_dict(torch.load("../models/resnet34_cifar10.pth"))
 model.eval()
 
 # Extract features from the model
