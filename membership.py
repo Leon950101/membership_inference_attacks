@@ -92,3 +92,4 @@ for features, labels in test_loader:
 
 accuracy = 100 * correct / total
 print(f"Attack model accuracy on test dataset: {accuracy:.2f}%")
+
