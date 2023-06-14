@@ -15,49 +15,49 @@ from torchvision.models import resnet34
 import multiprocessing
 import pickle
 
+# Generate dataset for attack model
+# in_member = []
+# out_member = []
+# model.eval()
+# with torch.no_grad():
+#     for data in train_loader:
+#         images, labels = data[0].to(device), data[1].to(device)
+#         outputs = model(images)
+#         in_member.append([outputs.data, labels])
+#     print(len(in_member), len(in_member[0]), len(in_member[1]), len(in_member[2]))
+
+#     for data in test_loader:
+#         images, labels = data[0].to(device), data[1].to(device)
+#         outputs = model(images)
+#         for idx in range(len(data)):
+#             out_member.append([outputs[idx].data, labels[idx], 0])
+#     print(len(out_member), len(out_member[0]), len(out_member[1]), len(out_member[2]))
+
 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# Define the shadow model architecture
-class ShadowModel(nn.Module):
-    def __init__(self):
-        super(ShadowModel, self).__init__()
-        self.resnet = resnet34(pretrained=False, num_classes=10) # Using ResNet34 as the base model
+MODEL_PATH = 'shadow_resnet_cifar10.pth'
 
-    def forward(self, x):
-        x = self.resnet(x)
-        return x
+shadow_model = models.resnet34(num_classes=200).to(device)
+# Change num_classes to 200 when you use the Tiny ImageNet dataset
 
-DATA_PATH = '../pickle/cifar10/resnet34/eval.p'
+state_dict = torch.load(MODEL_PATH, map_location=device)
+print(state_dict)
+# target_model.load_state_dict(state_dict['net']) # acc: 68.49%, epoch: 199
+# # print(target_model)
+
+# # print(target_model)
+# target_model.eval()
+
+# Hyperparameters
+batch_size = 64
+
+DATA_PATH = '../pickle/cifar10/resnet34/shadow.p'
 
 with open(DATA_PATH, "rb") as f:
     test_dataset = pickle.load(f)
 
-# train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False, num_workers=multiprocessing.cpu_count())
-
-# Create shadow model instance
-shadow_model = ShadowModel()
-
-# Define loss function and optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(shadow_model.parameters(), lr=0.01, momentum=0.9)
-
-correct = 0
-total = 0
-
-with torch.no_grad():
-    for images, labels in test_loader:
-        images = images.to(device)
-        labels = labels.to(device)
-
-        outputs = shadow_model(images)
-        _, predicted = torch.max(outputs.data, 1)
-
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-accuracy = 100 * correct / total
-print(f"Accuracy of the trained model: {accuracy:.2f}%")
+# test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 
 batch_size = 64
