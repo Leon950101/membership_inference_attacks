@@ -32,11 +32,11 @@ class AttackModel(nn.Module):
 class AttackModel_2(nn.Module):
     def __init__(self):
         super(AttackModel_2, self).__init__()
-        self.fc1 = nn.Linear(201, 512)
+        self.fc1 = nn.Linear(201, 1024)
         self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(512, 256)
+        self.fc2 = nn.Linear(1024, 128)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(256, 1)
+        self.fc3 = nn.Linear(128, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -67,11 +67,11 @@ settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shado
              ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
              '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0,
-             '../results/task2_resnet34_tinyimagenet.npy', 92.5],
+             '../results/task2_resnet34_tinyimagenet.npy', 93],
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
-             '../results/task3_mobilenetv2_tinyimagenet.npy', 81]
+             '../results/task3_mobilenetv2_tinyimagenet.npy', 82.5]
              ]
 
 # 68% 65% 90% 80%
