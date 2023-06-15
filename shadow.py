@@ -81,6 +81,33 @@ for epoch in range(num_epochs):
         if i % 100 == 99:
             print(f'Epoch [{epoch+1}/{num_epochs}], Step [{i+1}/{len(train_loader)}], Loss: {running_loss/100:.4f}')
             running_loss = 0.0
+    
+    model.eval()  
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in train_loader:
+            images, labels = data[0].to(device), data[1].to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    accuracy = 100 * correct / total
+    print(f'Accuracy on the train set: {accuracy:.2f}%', end=" ")
+
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in test_loader:
+            images, labels = data[0].to(device), data[1].to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    accuracy = 100 * correct / total
+    print(f'| on the test set: {accuracy:.2f}%')
 
 # Save the shadow model
 torch.save(model.state_dict(), MODEL_NAME)
