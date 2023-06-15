@@ -31,17 +31,17 @@ class AttackModel(nn.Module):
 class AttackModel_2(nn.Module):
     def __init__(self):
         super(AttackModel_2, self).__init__()
-        self.fc1 = nn.Linear(201, 10)
-        # self.relu1 = nn.ReLU()
-        # self.fc2 = nn.Linear(512, 256)
+        self.fc1 = nn.Linear(201, 256)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(256, 128)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(10, 1)
+        self.fc3 = nn.Linear(128, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         out = self.fc1(x)
-        # out = self.relu1(out)
-        # out = self.fc2(out)
+        out = self.relu1(out)
+        out = self.fc2(out)
         out = self.relu2(out)
         out = self.fc3(out)
         out = self.sigmoid(out)
