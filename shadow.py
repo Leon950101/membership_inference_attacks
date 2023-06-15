@@ -41,7 +41,7 @@ else:
 with open(DATA_PATH, "rb") as f:
     all_dataset = pickle.load(f)
 
-train_dataset, test_dataset = train_test_split(all_dataset, test_size=0.4)
+train_dataset, test_dataset = train_test_split(all_dataset, test_size=0.5)
 
 with open(TRAIN_DATA_PATH, 'wb') as file:
     pickle.dump(train_dataset, file)
@@ -111,31 +111,4 @@ for epoch in range(num_epochs):
 
 # Save the shadow model
 torch.save(model.state_dict(), MODEL_NAME)
-
-model.eval()  
-correct = 0
-total = 0
-with torch.no_grad():
-    for data in train_loader:
-        images, labels = data[0].to(device), data[1].to(device)
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-accuracy = 100 * correct / total
-print(f'Accuracy on the train set: {accuracy:.2f}%', end=" ")
-
-correct = 0
-total = 0
-with torch.no_grad():
-    for data in test_loader:
-        images, labels = data[0].to(device), data[1].to(device)
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-accuracy = 100 * correct / total
-print(f'| on the test set: {accuracy:.2f}%')
 

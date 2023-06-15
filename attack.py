@@ -5,6 +5,7 @@ from torchvision.models import resnet34, mobilenet_v2
 import pickle
 from torch.utils.data import DataLoader
 import sys
+from sklearn.model_selection import train_test_split
 
 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -92,7 +93,7 @@ with open(TEST_DATA_PATH, "rb") as f:
     test_dataset = pickle.load(f)
 
 with open(EVAL_DATA_PATH, "rb") as f:
-    eval_dataset = pickle.load(f) # [3*32*32], label, in/out
+    eval_dataset = pickle.load(f)
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)
 test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=True, num_workers=2)
@@ -116,6 +117,19 @@ def prepare_dataset(dataset, class_num):
             input_data[i].append(combined)
             labels[i].append(dataset[i][j][2])
     return input_data, labels
+
+def divide_eval(dataset, class_num):
+    eval_divided_input_data = [[] for _ in range(class_num)]
+    eval_divided_labels = [[] for _ in range(class_num)]
+    eval_divided_members = [[] for _ in range(class_num)]
+    for idx in range(len(dataset)):
+        label = dataset[idx][1]
+        eval_divided_input_data[label].append(dataset[idx][0])
+        eval_divided_labels[label].append(dataset[idx][1])
+        eval_divided_members[label].append(dataset[idx][2])
+    # for idx in range(CLASS_NUM):
+    #     print(len(eval_divided_input_data[idx]))
+    return eval_divided_input_data, eval_divided_labels, eval_divided_members
 
 if __name__ == '__main__':
 
@@ -158,85 +172,62 @@ if __name__ == '__main__':
         else:
             model = AttackModel_2()
             attack_models.append(model)
-    # Set the device configuration
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Define the loss function and optimizer
     input_data_all, labels_all = prepare_dataset(members_divided, CLASS_NUM)
     # for i in range(CLASS_NUM):
     #     print(len(input_data_all[i]), len(labels_all[i]))
     # Training loop for each attack model
-    for idx in range(len(attack_models)):
-        model = attack_models[idx]
-        model.to(device)
-        criterion = nn.BCELoss()
-        optimizer = optim.Adam(params=model.parameters(), lr=0.001)
-        loss = 0.0
-        
-        input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
-        labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
+    
+    for epoch in range(num_epochs):
+        for idx in range(len(attack_models)):
+            model = attack_models[idx]
+            model.to(device)
+            criterion = nn.BCELoss()
+            optimizer = optim.Adam(params=model.parameters(), lr=0.001)
+            loss = 0.0
+            
+            input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
+            labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
 
-        for epoch in range(num_epochs):
             # Forward pass
+            model.train()
             outputs = model(input_data)
             loss = criterion(outputs, labels)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-        # Print the loss for each epoch
-        print(f"Attack Model {idx}: Loss: {loss.item()}") # Epoch [{epoch+1}/{num_epochs}],
+        # Target Model
+        state_dict = torch.load(TARGET_MODEL_PATH, map_location=device)
+        target_model.load_state_dict(state_dict["net"])
+        target_model.eval()
 
-    # Testing the attack model
-    for idx in range(len(attack_models)):
-        model = attack_models[idx]
-        model.eval()
+        predict_members = []
+        with torch.no_grad():
+            for data in eval_loader:
+                images, labels, real_members = data[0].to(device), data[1].to(device), data[2].to(device)
+                outputs = target_model(images)
+
+        for i in range(len(labels)):
+            a_model = attack_models[labels[i]]
+            a_model.eval()
+            prediction = outputs[i].tolist()
+            label = labels[i].tolist()
+            combined = prediction + [label]
+            input_data = torch.tensor(combined, dtype=torch.float32).to(device)
+            out = a_model(input_data)
+            if out > 0.5: predict_members.append(1)
+            else: predict_members.append(0)
         
-        input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
-        labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
-       
-        outputs = model(input_data)
         correct = 0
-        for i in range(len(outputs)):
-            if outputs[i] < 0.5 and labels[i] < 0.5:
+        for i in range(len(real_members)):
+            if predict_members[i] == int(real_members[i]):
                 correct += 1
-            if outputs[i] >= 0.5 and labels[i] > 0.5:
-                correct += 1
-
-        accuracy = 100 * correct / len(labels)
-        print(f"Attack model accuracy on train dataset: {accuracy:.2f}%")
-
-    state_dict = torch.load(TARGET_MODEL_PATH, map_location=device)
-    target_model.load_state_dict(state_dict["net"])
-    target_model.eval()
-
-    predict_members = []
-    with torch.no_grad():
-        for data in eval_loader:
-            images, labels, real_members = data[0].to(device), data[1].to(device), data[2].to(device)
-            outputs = target_model(images)
-
-    for i in range(len(labels)):
-        a_model = attack_models[labels[i]]
-        a_model.eval()
-        prediction = outputs[i].tolist()
-        label = labels[i].tolist()
-        combined = prediction + [label]
-        input_data = torch.tensor(combined, dtype=torch.float32).to(device)
-        out = a_model(input_data)
-        if out > 0.5: predict_members.append(1)
-        else: predict_members.append(0)
-    
-    correct = 0
-    for i in range(len(real_members)):
-        if predict_members[i] == int(real_members[i]):
-            correct += 1
-    accuracy = 100 * correct / len(real_members)
-    print(f"Attack model accuracy for real: {accuracy:.2f}%")
-
+        accuracy = 100 * correct / len(real_members)
+        print(f"Epoch [{epoch+1}/{num_epochs}] | Attack Accuracy: {accuracy:.2f}%")
 
     ## Result save
-
     # with open(FINAL_TEST, "rb") as f:
     #     dataset = pickle.load(f)
 
