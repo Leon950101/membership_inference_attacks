@@ -4,18 +4,38 @@ import torch.optim as optim
 from torchvision.models import resnet34, mobilenet_v2
 import pickle
 from sklearn.model_selection import train_test_split
+import sys
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # resnet34:     cifar10: 68.49% | tinyimagenet: 19.65%
 # mobilenetv2:  cifar10: 72.25% | tinyimagenet: 24.19%
 
-DATA_PATH = '../pickle/cifar10/resnet34/shadow.p'
-MODEL_NAME = '../models/resnet34_cifar10_shadow.pth'
-TRAIN_DATA_PATH = '../pickle/cifar10/resnet34/shadow_train.p'
-TEST_DATA_PATH = '../pickle/cifar10/resnet34/shadow_test.p'
-num_c = 10
-model = resnet34(pretrained=False, num_classes=num_c).to(device)
+# Check if the required number of arguments is provided and retrive
+if len(sys.argv) > 2 or len(sys.argv) < 2:
+    print("Usage: python script_name.py settings")
+    sys.exit(1)
+else:
+    idx = int(sys.argv[1])
+
+settings = [['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow.pth', 
+             '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p', 10, 0],
+             ['../pickle/cifar10/mobilenetv2/shadow.p', '../models/mobilenetv2_cifar10_shadow.pth', 
+             '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p', 10, 1],
+             ['../pickle/tinyimagenet/resnet34/shadow.p', '../models/resnet34_tinyimagenet_shadow.pth', 
+             '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p', 200, 0],
+             ['../pickle/tinyimagenet/mobilenetv2/shadow.p', '../models/mobilenetv2_tinyimagenet_shadow.pth', 
+             '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p', 200, 1]]
+
+DATA_PATH = settings[idx][0]
+MODEL_NAME = settings[idx][1]
+TRAIN_DATA_PATH = settings[idx][2]
+TEST_DATA_PATH = settings[idx][3]
+num_c = settings[idx][4]
+if settings[idx][5] == 0:
+    model = resnet34(pretrained=False, num_classes=num_c).to(device)
+else:
+    model = mobilenet_v2(pretrained=False, num_classes=num_c).to(device)
 
 with open(DATA_PATH, "rb") as f:
     all_dataset = pickle.load(f)

@@ -4,20 +4,10 @@ import torch.optim as optim
 from torchvision.models import resnet34, mobilenet_v2
 import pickle
 from torch.utils.data import DataLoader
+import sys
 
 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-TARGET_MODEL_PATH = '../models/resnet34_cifar10.pth'
-SHADOW_MODEL_PATH = '../models/resnet34_cifar10_shadow.pth'
-TRAIN_DATA_PATH = '../pickle/cifar10/resnet34/shadow_train.p'
-TEST_DATA_PATH = '../pickle/cifar10/resnet34/shadow_test.p'
-EVAL_DATA_PATH = '../pickle/cifar10/resnet34/eval.p'
-CLASS_NUM = 10
-
-shadow_model = resnet34(num_classes=CLASS_NUM).to(device)
-target_model = resnet34(num_classes=CLASS_NUM).to(device)
-
-# Define the architecture for the attack model
 class AttackModel(nn.Module):
     def __init__(self):
         super(AttackModel, self).__init__()
@@ -36,6 +26,62 @@ class AttackModel(nn.Module):
         out = self.fc3(out)
         out = self.sigmoid(out)
         return out.squeeze()
+    
+class AttackModel_2(nn.Module):
+    def __init__(self):
+        super(AttackModel_2, self).__init__()
+        self.fc1 = nn.Linear(201, 256)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(256, 256)
+        self.relu2 = nn.ReLU()
+        self.fc3 = nn.Linear(256, 1)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.relu1(out)
+        out = self.fc2(out)
+        out = self.relu2(out)
+        out = self.fc3(out)
+        out = self.sigmoid(out)
+        return out.squeeze()
+
+if len(sys.argv) > 3 or len(sys.argv) < 3:
+    print("Usage: python script_name.py settings")
+    sys.exit(1)
+else:
+    idx = int(sys.argv[1])
+    num_epochs = int(sys.argv[2])
+
+settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shadow.pth',
+             '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p',
+             '../pickle/cifar10/resnet34/eval.p', 10, 0],
+             ['../models/mobilenetv2_cifar10.pth', '../models/mobilenetv2_cifar10_shadow.pth',
+             '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
+             '../pickle/cifar10/mobilenetv2/eval.p', 10, 1],
+             ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
+             '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
+             '../pickle/tinyimagenet/resnet34/eval.p', 200, 0],
+             ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
+             '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
+             '../pickle/tinyimagenet/mobilenetv2/eval.p', 200, 1]
+             ]
+
+TARGET_MODEL_PATH = settings[idx][0]
+SHADOW_MODEL_PATH = settings[idx][1]
+TRAIN_DATA_PATH = settings[idx][2]
+TEST_DATA_PATH = settings[idx][3]
+EVAL_DATA_PATH = settings[idx][4]
+CLASS_NUM = settings[idx][5]
+
+if settings[idx][6] == 0:
+    shadow_model = resnet34(num_classes=CLASS_NUM).to(device)
+    target_model = resnet34(num_classes=CLASS_NUM).to(device)
+else:
+    shadow_model = mobilenet_v2(num_classes=CLASS_NUM).to(device)
+    target_model = mobilenet_v2(num_classes=CLASS_NUM).to(device)
+
+# Define the architecture for the attack model
 
 with open(TRAIN_DATA_PATH, "rb") as f:
     train_dataset = pickle.load(f)
@@ -105,10 +151,13 @@ if __name__ == '__main__':
     attack_models = []
 
     # Create ten attack models
-    for _ in range(10):
-        model = AttackModel()
-        attack_models.append(model)
-
+    for _ in range(CLASS_NUM):
+        if settings[idx][5] == 10:
+            model = AttackModel()
+            attack_models.append(model)
+        else:
+            model = AttackModel_2()
+            attack_models.append(model)
     # Set the device configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -118,13 +167,10 @@ if __name__ == '__main__':
 
     # Define the loss function and optimizer
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(params=model.parameters(), lr=0.001)
-
     input_data_all, labels_all = prepare_dataset(members_divided, CLASS_NUM)
     # for i in range(CLASS_NUM):
     #     print(len(input_data_all[i]), len(labels_all[i]))
     # Training loop for each attack model
-    num_epochs = 100
     for idx in range(len(attack_models)):
         model = attack_models[idx]
         input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
@@ -133,7 +179,7 @@ if __name__ == '__main__':
             # Forward pass
             outputs = model(input_data)
             loss = criterion(outputs, labels)
-
+            optimizer = optim.Adam(params=model.parameters(), lr=0.001)
             # Backward and optimize
             optimizer.zero_grad()
             loss.backward()
