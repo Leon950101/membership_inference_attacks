@@ -12,11 +12,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # mobilenetv2:  cifar10: 72.25% | tinyimagenet: 24.19%
 
 # Check if the required number of arguments is provided and retrive
-if len(sys.argv) > 2 or len(sys.argv) < 2:
-    print("Usage: python script_name.py settings")
+if len(sys.argv) > 3 or len(sys.argv) < 3:
+    print("Usage: python script_name.py settings epochs")
     sys.exit(1)
 else:
     idx = int(sys.argv[1])
+    num_epochs = int(sys.argv[2])
 
 settings = [['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow.pth', 
              '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p', 10, 0],
@@ -40,7 +41,7 @@ else:
 with open(DATA_PATH, "rb") as f:
     all_dataset = pickle.load(f)
 
-train_dataset, test_dataset = train_test_split(all_dataset, test_size=0.5, random_state=42)
+train_dataset, test_dataset = train_test_split(all_dataset, test_size=0.4)
 
 with open(TRAIN_DATA_PATH, 'wb') as file:
     pickle.dump(train_dataset, file)
@@ -62,7 +63,6 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
 
 # Training loop
-num_epochs = 199 
 for epoch in range(num_epochs):
     model.train()
     running_loss = 0.0

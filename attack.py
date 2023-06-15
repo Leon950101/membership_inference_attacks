@@ -30,11 +30,11 @@ class AttackModel(nn.Module):
 class AttackModel_2(nn.Module):
     def __init__(self):
         super(AttackModel_2, self).__init__()
-        self.fc1 = nn.Linear(201, 512)
+        self.fc1 = nn.Linear(201, 10)
         # self.relu1 = nn.ReLU()
         # self.fc2 = nn.Linear(512, 256)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(512, 1)
+        self.fc3 = nn.Linear(10, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -160,18 +160,7 @@ if __name__ == '__main__':
             attack_models.append(model)
     # Set the device configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Move the attack models to the device
-    for model in attack_models:
-        model.to(device)
     
-    cs = []
-    op = []
-    for i in range(len(attack_models)):
-        model = attack_models[i]
-        cs.append(nn.BCELoss())
-        op.append(optim.Adam(params=model.parameters(), lr=0.001))
-
     # Define the loss function and optimizer
     input_data_all, labels_all = prepare_dataset(members_divided, CLASS_NUM)
     # for i in range(CLASS_NUM):
@@ -179,12 +168,13 @@ if __name__ == '__main__':
     # Training loop for each attack model
     for idx in range(len(attack_models)):
         model = attack_models[idx]
-        criterion = cs[idx]
-        optimizer = op[idx]
+        model.to(device)
+        criterion = nn.BCELoss()
+        optimizer = optim.Adam(params=model.parameters(), lr=0.001)
         loss = 0.0
         
-        input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
-        labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
+        input_data = torch.tensor(input_data_all[CLASS_NUM - 1 - idx], dtype=torch.float32).to(device)
+        labels = torch.tensor(labels_all[CLASS_NUM - 1 - idx], dtype=torch.float32).to(device)
 
         for epoch in range(num_epochs):
             # Forward pass
@@ -201,8 +191,9 @@ if __name__ == '__main__':
     for idx in range(len(attack_models)):
         model = attack_models[idx]
         model.eval()
-        input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
-        labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
+        
+        input_data = torch.tensor(input_data_all[CLASS_NUM - 1 - idx], dtype=torch.float32).to(device)
+        labels = torch.tensor(labels_all[CLASS_NUM - 1 - idx], dtype=torch.float32).to(device)
        
         outputs = model(input_data)
         correct = 0
