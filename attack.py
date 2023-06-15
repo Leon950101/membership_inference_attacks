@@ -173,8 +173,8 @@ if __name__ == '__main__':
         optimizer = optim.Adam(params=model.parameters(), lr=0.001)
         loss = 0.0
         
-        input_data = torch.tensor(input_data_all[CLASS_NUM - 1 - idx], dtype=torch.float32).to(device)
-        labels = torch.tensor(labels_all[CLASS_NUM - 1 - idx], dtype=torch.float32).to(device)
+        input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
+        labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
 
         for epoch in range(num_epochs):
             # Forward pass
@@ -192,8 +192,8 @@ if __name__ == '__main__':
         model = attack_models[idx]
         model.eval()
         
-        input_data = torch.tensor(input_data_all[CLASS_NUM - 1 - idx], dtype=torch.float32).to(device)
-        labels = torch.tensor(labels_all[CLASS_NUM - 1 - idx], dtype=torch.float32).to(device)
+        input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
+        labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
        
         outputs = model(input_data)
         correct = 0
