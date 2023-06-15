@@ -30,17 +30,17 @@ class AttackModel(nn.Module):
 class AttackModel_2(nn.Module):
     def __init__(self):
         super(AttackModel_2, self).__init__()
-        self.fc1 = nn.Linear(201, 256)
-        self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(256, 256)
+        self.fc1 = nn.Linear(201, 512)
+        # self.relu1 = nn.ReLU()
+        # self.fc2 = nn.Linear(512, 256)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(256, 1)
+        self.fc3 = nn.Linear(512, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         out = self.fc1(x)
-        out = self.relu1(out)
-        out = self.fc2(out)
+        # out = self.relu1(out)
+        # out = self.fc2(out)
         out = self.relu2(out)
         out = self.fc3(out)
         out = self.sigmoid(out)
@@ -55,16 +55,16 @@ else:
 
 settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shadow.pth',
              '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p',
-             '../pickle/cifar10/resnet34/eval.p', 10, 0],
+             '../pickle/cifar10/resnet34/eval.p', '../pickle/cifar10/resnet34/test.p', 10, 0],
              ['../models/mobilenetv2_cifar10.pth', '../models/mobilenetv2_cifar10_shadow.pth',
              '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
-             '../pickle/cifar10/mobilenetv2/eval.p', 10, 1],
+             '../pickle/cifar10/mobilenetv2/eval.p', '../pickle/cifar10/mobilenetv2/test.p', 10, 1],
              ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
-             '../pickle/tinyimagenet/resnet34/eval.p', 200, 0],
+             '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0],
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
-             '../pickle/tinyimagenet/mobilenetv2/eval.p', 200, 1]
+             '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1]
              ]
 
 TARGET_MODEL_PATH = settings[idx][0]
@@ -72,9 +72,11 @@ SHADOW_MODEL_PATH = settings[idx][1]
 TRAIN_DATA_PATH = settings[idx][2]
 TEST_DATA_PATH = settings[idx][3]
 EVAL_DATA_PATH = settings[idx][4]
-CLASS_NUM = settings[idx][5]
+FINAL_TEST = settings[idx][5]
 
-if settings[idx][6] == 0:
+CLASS_NUM = settings[idx][6]
+
+if settings[idx][7] == 0:
     shadow_model = resnet34(num_classes=CLASS_NUM).to(device)
     target_model = resnet34(num_classes=CLASS_NUM).to(device)
 else:
@@ -92,8 +94,8 @@ with open(TEST_DATA_PATH, "rb") as f:
 with open(EVAL_DATA_PATH, "rb") as f:
     eval_dataset = pickle.load(f) # [3*32*32], label, in/out
 
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=len(train_dataset), shuffle=True, num_workers=2)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=True, num_workers=2)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=True, num_workers=2)
 eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=len(eval_dataset), shuffle=False, num_workers=2)
 
 def divide(dataset, class_num):
@@ -122,21 +124,19 @@ if __name__ == '__main__':
     # Generate dataset for attack model
     shadow_model.eval()
     with torch.no_grad():
+        in_member_all = []
         for data in train_loader:
             images, labels = data[0].to(device), data[1].to(device)
             outputs = shadow_model(images)
-
-        in_member_all = []
-        for i in range(len(train_dataset)):
-            in_member_all.append([outputs[i], labels[i], 1])
-
+            for i in range(len(outputs)):
+                in_member_all.append([outputs[i], labels[i], 1])
+        
+        out_member_all = []
         for data in test_loader:
             images, labels = data[0].to(device), data[1].to(device)
             outputs = shadow_model(images)
-
-        out_member_all = []
-        for i in range(len(test_dataset)):
-            out_member_all.append([outputs[i], labels[i], 0])
+            for i in range(len(outputs)):
+                out_member_all.append([outputs[i], labels[i], 0])
         
         # print(len(in_member_all), in_member_all[0][0], in_member_all[0][1], in_member_all[0][2])
         # print(len(out_member_all), out_member_all[0][0], out_member_all[0][1], out_member_all[0][2])
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
     # Create ten attack models
     for _ in range(CLASS_NUM):
-        if settings[idx][5] == 10:
+        if CLASS_NUM == 10:
             model = AttackModel()
             attack_models.append(model)
         else:
@@ -164,29 +164,38 @@ if __name__ == '__main__':
     # Move the attack models to the device
     for model in attack_models:
         model.to(device)
+    
+    cs = []
+    op = []
+    for i in range(len(attack_models)):
+        model = attack_models[i]
+        cs.append(nn.BCELoss())
+        op.append(optim.Adam(params=model.parameters(), lr=0.001))
 
     # Define the loss function and optimizer
-    criterion = nn.BCELoss()
     input_data_all, labels_all = prepare_dataset(members_divided, CLASS_NUM)
     # for i in range(CLASS_NUM):
     #     print(len(input_data_all[i]), len(labels_all[i]))
     # Training loop for each attack model
     for idx in range(len(attack_models)):
         model = attack_models[idx]
+        criterion = cs[idx]
+        optimizer = op[idx]
+        loss = 0.0
+        
         input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
         labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
+
         for epoch in range(num_epochs):
             # Forward pass
             outputs = model(input_data)
             loss = criterion(outputs, labels)
-            optimizer = optim.Adam(params=model.parameters(), lr=0.001)
-            # Backward and optimize
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            # Print the loss for each epoch
-            print(f"Attack Model {idx}: Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item()}")
+        # Print the loss for each epoch
+        print(f"Attack Model {idx}: Loss: {loss.item()}") # Epoch [{epoch+1}/{num_epochs}],
 
     # Testing the attack model
     for idx in range(len(attack_models)):
@@ -204,9 +213,7 @@ if __name__ == '__main__':
                 correct += 1
 
         accuracy = 100 * correct / len(labels)
-        print(f"Attack model accuracy on test dataset: {accuracy:.2f}%")
-
-    # Change num_classes to 200 when you use the Tiny ImageNet dataset
+        print(f"Attack model accuracy on train dataset: {accuracy:.2f}%")
 
     state_dict = torch.load(TARGET_MODEL_PATH, map_location=device)
     target_model.load_state_dict(state_dict["net"])
@@ -235,4 +242,23 @@ if __name__ == '__main__':
             correct += 1
     accuracy = 100 * correct / len(real_members)
     print(f"Attack model accuracy for real: {accuracy:.2f}%")
+
+
+    ## Result save
+
+    # with open(FINAL_TEST, "rb") as f:
+    #     dataset = pickle.load(f)
+
+    # import numpy as np
+
+    # prediction = [1 for i in range(len(dataset))]
+    # print(prediction)
+
+    # np.save('../results/task0_resnet34_cifar10.npy', prediction)
+    # np.save('../results/task1_mobilenetv2_cifar10.npy', prediction)
+    # np.save('../results/task2_resnet34_tinyimagenet.npy', prediction)
+    # np.save('../results/task3_mobilenetv2_tinyimagenet.npy', prediction)
+
+    # test = np.load('../results/task3_mobilenetv2_tinyimagenet.npy')
+    # print(test)
 
