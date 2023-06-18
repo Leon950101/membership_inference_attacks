@@ -75,7 +75,7 @@ settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shado
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
-             '../results/task3_mobilenetv2_tinyimagenet.npy', 82] # 3 10 50
+             '../results/task3_mobilenetv2_tinyimagenet.npy', 82.5] # 3 10 50
              ]
 
 # 68% 65% 90% 80%
@@ -178,68 +178,68 @@ if __name__ == '__main__':
         members_divided[i] = in_member_divided[i] + out_member_divided[i]
     input_data_all, labels_all = prepare_dataset(members_divided, CLASS_NUM)
 
-    # Create a list to store the attack models
-    attack_models = []
-
-    # Create ten attack models
-    for _ in range(CLASS_NUM):
-        if CLASS_NUM == 10:
-            model = AttackModel()
-            attack_models.append(model)
-        else:
-            model = AttackModel_2()
-            attack_models.append(model)
-    
     # Training loop for each attack model
-    for epoch in range(num_epochs):
-        for idx in range(len(attack_models)):
-            model = attack_models[idx]
-            model.to(device)
-            criterion = nn.BCELoss()
-            optimizer = optim.Adam(params=model.parameters(), lr=0.001)
-            loss = 0.0
+    not_good = True
+    while not_good:
+         # Create attack models
+        attack_models = []
+        for _ in range(CLASS_NUM):
+            if CLASS_NUM == 10:
+                model = AttackModel()
+                attack_models.append(model)
+            else:
+                model = AttackModel_2()
+                attack_models.append(model)
+        for epoch in range(num_epochs):
+            for idx in range(len(attack_models)):
+                model = attack_models[idx]
+                model.to(device)
+                criterion = nn.BCELoss()
+                optimizer = optim.Adam(params=model.parameters(), lr=0.001)
+                loss = 0.0
+                
+                input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
+                labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
+
+                # Forward pass
+                model.train()
+                outputs = model(input_data)
+                loss = criterion(outputs, labels)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+            # Target Model
+            state_dict = torch.load(TARGET_MODEL_PATH, map_location=device)
+            target_model.load_state_dict(state_dict["net"])
+            target_model.eval()
+
+            predict_members = []
+            with torch.no_grad():
+                for data in eval_loader:
+                    images, labels, real_members = data[0].to(device), data[1].to(device), data[2].to(device)
+                    outputs = target_model(images)
+
+            for i in range(len(labels)):
+                a_model = attack_models[labels[i]]
+                a_model.eval()
+                prediction = outputs[i].tolist()
+                label = labels[i].tolist() / label_divide
+                combined = prediction + [label]
+                input_data = torch.tensor(combined, dtype=torch.float32).to(device)
+                out = a_model(input_data)
+                if out > 0.5: predict_members.append(1)
+                else: predict_members.append(0)
             
-            input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
-            labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
-
-            # Forward pass
-            model.train()
-            outputs = model(input_data)
-            loss = criterion(outputs, labels)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-        # Target Model
-        state_dict = torch.load(TARGET_MODEL_PATH, map_location=device)
-        target_model.load_state_dict(state_dict["net"])
-        target_model.eval()
-
-        predict_members = []
-        with torch.no_grad():
-            for data in eval_loader:
-                images, labels, real_members = data[0].to(device), data[1].to(device), data[2].to(device)
-                outputs = target_model(images)
-
-        for i in range(len(labels)):
-            a_model = attack_models[labels[i]]
-            a_model.eval()
-            prediction = outputs[i].tolist()
-            label = labels[i].tolist() / label_divide
-            combined = prediction + [label]
-            input_data = torch.tensor(combined, dtype=torch.float32).to(device)
-            out = a_model(input_data)
-            if out > 0.5: predict_members.append(1)
-            else: predict_members.append(0)
-        
-        correct = 0
-        for i in range(len(real_members)):
-            if predict_members[i] == int(real_members[i]):
-                correct += 1
-        accuracy = 100 * correct / len(real_members)
-        print(f"Epoch [{epoch+1}/{num_epochs}] | Attack Accuracy: {accuracy:.2f}%")
-        if accuracy >= BEST_ACC:
-            break
+            correct = 0
+            for i in range(len(real_members)):
+                if predict_members[i] == int(real_members[i]):
+                    correct += 1
+            accuracy = 100 * correct / len(real_members)
+            print(f"Epoch [{epoch+1}/{num_epochs}] | Attack Accuracy: {accuracy:.2f}%")
+            if accuracy >= BEST_ACC:
+                not_good = False
+                break
 
     # Target Model
     state_dict = torch.load(TARGET_MODEL_PATH, map_location=device)
