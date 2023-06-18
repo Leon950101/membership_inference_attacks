@@ -13,11 +13,13 @@ device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class AttackModel(nn.Module):
     def __init__(self):
         super(AttackModel, self).__init__()
-        self.fc1 = nn.Linear(11, 64)
+        self.fc1 = nn.Linear(11, 32)
         self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(64, 32)
+        self.fc2 = nn.Linear(32, 64)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(32, 1)
+        self.fc3 = nn.Linear(64, 32)
+        self.relu3 = nn.ReLU()
+        self.fc4 = nn.Linear(32, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -26,6 +28,8 @@ class AttackModel(nn.Module):
         out = self.fc2(out)
         out = self.relu2(out)
         out = self.fc3(out)
+        out = self.relu3(out)
+        out = self.fc4(out)
         out = self.sigmoid(out)
         return out.squeeze()
     
@@ -34,9 +38,9 @@ class AttackModel_2(nn.Module):
         super(AttackModel_2, self).__init__()
         self.fc1 = nn.Linear(201, 1024)
         self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(1024, 128)
+        self.fc2 = nn.Linear(1024, 256)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(128, 1)
+        self.fc3 = nn.Linear(256, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -49,7 +53,7 @@ class AttackModel_2(nn.Module):
         return out.squeeze()
 
 if len(sys.argv) > 4 or len(sys.argv) < 4:
-    print("Usage: python script_name.py settings label_divide")
+    print("Usage: python script_name.py settings num_epochs label_divide")
     sys.exit(1)
 else:
     idx = int(sys.argv[1])
@@ -59,19 +63,19 @@ else:
 settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shadow.pth',
              '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p',
              '../pickle/cifar10/resnet34/eval.p', '../pickle/cifar10/resnet34/test.p', 10, 0,
-             '../results/task0_resnet34_cifar10.npy', 73],
+             '../results/task0_resnet34_cifar10.npy', 73.5], # 0 100 1
              ['../models/mobilenetv2_cifar10.pth', '../models/mobilenetv2_cifar10_shadow.pth',
              '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
              '../pickle/cifar10/mobilenetv2/eval.p', '../pickle/cifar10/mobilenetv2/test.p', 10, 1,
-             '../results/task1_mobilenetv2_cifar10.npy', 73],
+             '../results/task1_mobilenetv2_cifar10.npy', 73], # 1 100 1
              ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
              '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0,
-             '../results/task2_resnet34_tinyimagenet.npy', 93],
+             '../results/task2_resnet34_tinyimagenet.npy', 95], # 2 10 50
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
-             '../results/task3_mobilenetv2_tinyimagenet.npy', 82.5]
+             '../results/task3_mobilenetv2_tinyimagenet.npy', 82] # 3 10 50
              ]
 
 # 68% 65% 90% 80%
@@ -259,6 +263,7 @@ if __name__ == '__main__':
         if out > 0.5: predict_members.append(1)
         else: predict_members.append(0)
 
-    np.save(SAVE_NAME, predict_members)
-    test = np.load(SAVE_NAME)
+    if accuracy >= BEST_ACC:
+        np.save(SAVE_NAME, predict_members)
+        test = np.load(SAVE_NAME)
 
