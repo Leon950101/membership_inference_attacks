@@ -68,8 +68,8 @@ settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shado
              '../pickle/cifar10/mobilenetv2/shadow_train_2.p', '../pickle/cifar10/mobilenetv2/shadow_test_2.p',
              '../pickle/cifar10/mobilenetv2/eval.p', '../pickle/cifar10/mobilenetv2/test.p', 10, 1,
              '../results/task1_mobilenetv2_cifar10.npy', 73, '../models/mobilenetv2_cifar10_shadow_4.pth', 100, 1,
-            '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
-            '../models/mobilenetv2_cifar10_shadow_1.pth', '../models/mobilenetv2_cifar10_shadow_2.pth'],
+             '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
+             '../models/mobilenetv2_cifar10_shadow_1.pth', '../models/mobilenetv2_cifar10_shadow_2.pth'],
              ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow_3.pth',
              '../pickle/tinyimagenet/resnet34/shadow_train_2.p', '../pickle/tinyimagenet/resnet34/shadow_test_2.p',
              '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0,
@@ -79,7 +79,7 @@ settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shado
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow_3.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train_2.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test_2.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
-             '../results/task3_mobilenetv2_tinyimagenet.npy', 85, '../models/mobilenetv2_tinyimagenet_shadow_4.pth', 5, 50,
+             '../results/task3_mobilenetv2_tinyimagenet.npy', 85.5, '../models/mobilenetv2_tinyimagenet_shadow_4.pth', 5, 50,
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../models/mobilenetv2_tinyimagenet_shadow_1.pth', '../models/mobilenetv2_tinyimagenet_shadow_2.pth']
              ]
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     input_data_set = []
     labels_set = []
     num_to_train_start = 0
-    num_to_train_end = 3
+    num_to_train_end = 4
     
     for idx in range(num_to_train_start, num_to_train_end):
         state_dict = torch.load(shadow_set[idx], map_location=device)
