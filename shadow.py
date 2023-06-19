@@ -46,16 +46,19 @@ if settings[idx][5] == 0:
 else:
     model = mobilenet_v2(pretrained=False, num_classes=num_c).to(device)
 
-with open(DATA_PATH, "rb") as f:
-    all_dataset = pickle.load(f)
 
-# train_dataset, test_dataset = train_test_split(all_dataset, test_size=0.5)
 
-# with open(TRAIN_DATA_PATH, 'wb') as file:
-#     pickle.dump(train_dataset, file)
+if idx >= 0 and idx <= 3:
+    with open(DATA_PATH, "rb") as f:
+        all_dataset = pickle.load(f)
 
-# with open(TEST_DATA_PATH, 'wb') as file:
-#     pickle.dump(test_dataset, file)
+    train_dataset, test_dataset = train_test_split(all_dataset, test_size=0.5)
+
+    with open(TRAIN_DATA_PATH, 'wb') as file:
+        pickle.dump(train_dataset, file)
+
+    with open(TEST_DATA_PATH, 'wb') as file:
+        pickle.dump(test_dataset, file)
 
 with open(TRAIN_DATA_PATH, "rb") as f: # Another Half
     train_dataset = pickle.load(f)
@@ -116,8 +119,8 @@ for epoch in range(num_epochs):
     accuracy_test = 100 * correct / total
     print(f'| on the test set: {accuracy_test:.2f}%')
     
-    if epoch_loss < 0.01 and accuracy_train > 99.99:
-        break
+    # if epoch_loss < 0.01 and accuracy_train > 99.99:
+    #     break
 
 # Save the shadow model
 torch.save(model.state_dict(), MODEL_NAME)
