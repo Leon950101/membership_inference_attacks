@@ -19,14 +19,22 @@ else:
     idx = int(sys.argv[1])
     num_epochs = int(sys.argv[2])
 
-settings = [['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow.pth', 
+settings = [['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow_2.pth', 
              '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p', 10, 0],
-             ['../pickle/cifar10/mobilenetv2/shadow.p', '../models/mobilenetv2_cifar10_shadow.pth', 
+             ['../pickle/cifar10/mobilenetv2/shadow.p', '../models/mobilenetv2_cifar10_shadow_2.pth', 
              '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p', 10, 1],
-             ['../pickle/tinyimagenet/resnet34/shadow.p', '../models/resnet34_tinyimagenet_shadow.pth', 
+             ['../pickle/tinyimagenet/resnet34/shadow.p', '../models/resnet34_tinyimagenet_shadow_2.pth', 
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p', 200, 0],
+             ['../pickle/tinyimagenet/mobilenetv2/shadow.p', '../models/mobilenetv2_tinyimagenet_shadow_2.pth', 
+             '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p', 200, 1],
+             ['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow.pth', 
+             '../pickle/cifar10/resnet34/shadow_test.p', '../pickle/cifar10/resnet34/shadow_train.p', 10, 0],
+             ['../pickle/cifar10/mobilenetv2/shadow.p', '../models/mobilenetv2_cifar10_shadow.pth', 
+             '../pickle/cifar10/mobilenetv2/shadow_test.p', '../pickle/cifar10/mobilenetv2/shadow_train.p', 10, 1],
+             ['../pickle/tinyimagenet/resnet34/shadow.p', '../models/resnet34_tinyimagenet_shadow.pth', 
+             '../pickle/tinyimagenet/resnet34/shadow_test.p', '../pickle/tinyimagenet/resnet34/shadow_train.p', 200, 0],
              ['../pickle/tinyimagenet/mobilenetv2/shadow.p', '../models/mobilenetv2_tinyimagenet_shadow.pth', 
-             '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p', 200, 1]]
+             '../pickle/tinyimagenet/mobilenetv2/shadow_test.p', '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', 200, 1]]
 
 DATA_PATH = settings[idx][0]
 MODEL_NAME = settings[idx][1]
@@ -49,10 +57,10 @@ with open(DATA_PATH, "rb") as f:
 # with open(TEST_DATA_PATH, 'wb') as file:
 #     pickle.dump(test_dataset, file)
 
-with open(TEST_DATA_PATH, "rb") as f: # Another Half
+with open(TRAIN_DATA_PATH, "rb") as f: # Another Half
     train_dataset = pickle.load(f)
 
-with open(TRAIN_DATA_PATH, "rb") as f: # Another Half
+with open(TEST_DATA_PATH, "rb") as f: # Another Half
     test_dataset = pickle.load(f)
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)

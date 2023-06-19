@@ -71,7 +71,7 @@ settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shado
              ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
              '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0,
-             '../results/task2_resnet34_tinyimagenet.npy', 94.5, '../models/resnet34_tinyimagenet_shadow_2.pth'], # 2 10 50
+             '../results/task2_resnet34_tinyimagenet.npy', 95, '../models/resnet34_tinyimagenet_shadow_2.pth'], # 2 10 50
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
@@ -246,12 +246,14 @@ if __name__ == '__main__':
 
                 model.train()
                 # Forward pass
+                # Another Half
                 outputs = model(input_data)
                 loss = criterion(outputs, labels)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
                 
+                # Original Half
                 outputs_2 = model(input_data_2)
                 loss = criterion(outputs_2, labels_2)
                 optimizer.zero_grad()
@@ -277,7 +279,7 @@ if __name__ == '__main__':
                 combined = prediction + [label]
                 input_data = torch.tensor(combined, dtype=torch.float32).to(device)
                 out = a_model(input_data)
-                if out > 0.5: predict_members.append(1)
+                if out >= 0.5: predict_members.append(1)
                 else: predict_members.append(0)
             
             correct = 0
@@ -309,7 +311,7 @@ if __name__ == '__main__':
         combined = prediction + [label]
         input_data = torch.tensor(combined, dtype=torch.float32).to(device)
         out = a_model(input_data)
-        if out > 0.5: predict_members.append(1)
+        if out >= 0.5: predict_members.append(1)
         else: predict_members.append(0)
 
     if accuracy >= BEST_ACC:
