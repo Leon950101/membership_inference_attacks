@@ -52,30 +52,28 @@ class AttackModel_2(nn.Module):
         out = self.sigmoid(out)
         return out.squeeze()
 
-if len(sys.argv) > 4 or len(sys.argv) < 4:
-    print("Usage: python script_name.py settings num_epochs label_divide")
+if len(sys.argv) > 2 or len(sys.argv) < 2:
+    print("Usage: python script_name.py task_idx")
     sys.exit(1)
 else:
     idx = int(sys.argv[1])
-    num_epochs = int(sys.argv[2])
-    label_divide = int(sys.argv[3])
 
 settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shadow.pth',
              '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p',
              '../pickle/cifar10/resnet34/eval.p', '../pickle/cifar10/resnet34/test.p', 10, 0,
-             '../results/task0_resnet34_cifar10.npy', 75, '../models/resnet34_cifar10_shadow_2.pth'], # 0 100 1
+             '../results/task0_resnet34_cifar10.npy', 75, '../models/resnet34_cifar10_shadow_2.pth', 100, 1],
              ['../models/mobilenetv2_cifar10.pth', '../models/mobilenetv2_cifar10_shadow.pth',
              '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
              '../pickle/cifar10/mobilenetv2/eval.p', '../pickle/cifar10/mobilenetv2/test.p', 10, 1,
-             '../results/task1_mobilenetv2_cifar10.npy', 73.5, '../models/mobilenetv2_cifar10_shadow_2.pth'], # 1 100 1
+             '../results/task1_mobilenetv2_cifar10.npy', 73, '../models/mobilenetv2_cifar10_shadow_2.pth', 100, 1],
              ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
              '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0,
-             '../results/task2_resnet34_tinyimagenet.npy', 95, '../models/resnet34_tinyimagenet_shadow_2.pth'], # 2 10 50
+             '../results/task2_resnet34_tinyimagenet.npy', 95, '../models/resnet34_tinyimagenet_shadow_2.pth', 10, 50],
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
-             '../results/task3_mobilenetv2_tinyimagenet.npy', 82.5, '../models/mobilenetv2_tinyimagenet_shadow_2.pth'] # 3 10 50
+             '../results/task3_mobilenetv2_tinyimagenet.npy', 82.5, '../models/mobilenetv2_tinyimagenet_shadow_2.pth', 10, 50]
              ]
 
 # 68% 65% 90% 80%
@@ -98,6 +96,8 @@ else:
 SAVE_NAME = settings[idx][8]
 BEST_ACC = settings[idx][9]
 SHADOW_MODEL_PATH_2 = settings[idx][10]
+num_epochs = settings[idx][11]
+label_divide = settings[idx][12]
 
 with open(TRAIN_DATA_PATH, "rb") as f: # Another Half
     test_dataset = pickle.load(f)
