@@ -67,11 +67,11 @@ settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shado
              ['../models/mobilenetv2_cifar10.pth', '../models/mobilenetv2_cifar10_shadow.pth',
              '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
              '../pickle/cifar10/mobilenetv2/eval.p', '../pickle/cifar10/mobilenetv2/test.p', 10, 1,
-             '../results/task1_mobilenetv2_cifar10.npy', 73, '../models/mobilenetv2_cifar10_shadow_2.pth'], # 1 100 1
+             '../results/task1_mobilenetv2_cifar10.npy', 73.5, '../models/mobilenetv2_cifar10_shadow_2.pth'], # 1 100 1
              ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
              '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0,
-             '../results/task2_resnet34_tinyimagenet.npy', 95, '../models/resnet34_tinyimagenet_shadow_2.pth'], # 2 10 50
+             '../results/task2_resnet34_tinyimagenet.npy', 93, '../models/resnet34_tinyimagenet_shadow_2.pth'], # 2 10 50
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
@@ -119,8 +119,8 @@ with open(FINAL_TEST, "rb") as f:
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)
 test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=True, num_workers=2)
-train_loader_2 = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)
-test_loader_2 = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=True, num_workers=2)
+train_loader_2 = torch.utils.data.DataLoader(train_dataset_2, batch_size=128, shuffle=True, num_workers=2)
+test_loader_2 = torch.utils.data.DataLoader(test_dataset_2, batch_size=128, shuffle=True, num_workers=2)
 eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=len(eval_dataset), shuffle=False, num_workers=2)
 final_loader = torch.utils.data.DataLoader(final_dataset, batch_size=len(final_dataset), shuffle=False, num_workers=2)
 
@@ -195,14 +195,14 @@ if __name__ == '__main__':
     shadow_model.eval()
     with torch.no_grad():
         in_member_all = []
-        for data in train_loader:
+        for data in train_loader_2:
             images, labels = data[0].to(device), data[1].to(device)
             outputs = shadow_model(images)
             for i in range(len(outputs)):
                 in_member_all.append([outputs[i], labels[i], 1])
         
         out_member_all = []
-        for data in test_loader:
+        for data in test_loader_2:
             images, labels = data[0].to(device), data[1].to(device)
             outputs = shadow_model(images)
             for i in range(len(outputs)):
@@ -237,15 +237,15 @@ if __name__ == '__main__':
                 criterion = nn.BCELoss()
                 optimizer = optim.Adam(params=model.parameters(), lr=0.001)
                 loss = 0.0
-                
+
                 input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
                 labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
                 
                 input_data_2 = torch.tensor(input_data_all_2[idx], dtype=torch.float32).to(device)
                 labels_2 = torch.tensor(labels_all_2[idx], dtype=torch.float32).to(device)
 
-                # Forward pass
                 model.train()
+                # Forward pass
                 outputs = model(input_data)
                 loss = criterion(outputs, labels)
                 optimizer.zero_grad()
