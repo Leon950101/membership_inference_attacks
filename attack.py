@@ -63,19 +63,19 @@ else:
 settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shadow.pth',
              '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p',
              '../pickle/cifar10/resnet34/eval.p', '../pickle/cifar10/resnet34/test.p', 10, 0,
-             '../results/task0_resnet34_cifar10.npy', 73.5], # 0 100 1
+             '../results/task0_resnet34_cifar10.npy', 75, '../models/resnet34_cifar10_shadow_2.pth'], # 0 100 1
              ['../models/mobilenetv2_cifar10.pth', '../models/mobilenetv2_cifar10_shadow.pth',
              '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
              '../pickle/cifar10/mobilenetv2/eval.p', '../pickle/cifar10/mobilenetv2/test.p', 10, 1,
-             '../results/task1_mobilenetv2_cifar10.npy', 73], # 1 100 1
+             '../results/task1_mobilenetv2_cifar10.npy', 73, '../models/mobilenetv2_cifar10_shadow_2.pth'], # 1 100 1
              ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
              '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0,
-             '../results/task2_resnet34_tinyimagenet.npy', 95], # 2 10 50
+             '../results/task2_resnet34_tinyimagenet.npy', 95, '../models/resnet34_tinyimagenet_shadow_2.pth'], # 2 10 50
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
-             '../results/task3_mobilenetv2_tinyimagenet.npy', 82.5] # 3 10 50
+             '../results/task3_mobilenetv2_tinyimagenet.npy', 82.5, '../models/mobilenetv2_tinyimagenet_shadow_2.pth'] # 3 10 50
              ]
 
 # 68% 65% 90% 80%
@@ -97,12 +97,19 @@ else:
 
 SAVE_NAME = settings[idx][8]
 BEST_ACC = settings[idx][9]
+SHADOW_MODEL_PATH_2 = settings[idx][10]
 
-with open(TRAIN_DATA_PATH, "rb") as f:
+with open(TRAIN_DATA_PATH, "rb") as f: # Another Half
+    test_dataset = pickle.load(f)
+
+with open(TEST_DATA_PATH, "rb") as f: # Another Half
     train_dataset = pickle.load(f)
 
-with open(TEST_DATA_PATH, "rb") as f:
-    test_dataset = pickle.load(f)
+with open(TRAIN_DATA_PATH, "rb") as f: # Original Half
+    train_dataset_2 = pickle.load(f)
+
+with open(TEST_DATA_PATH, "rb") as f: # Original Half
+    test_dataset_2 = pickle.load(f)
 
 with open(EVAL_DATA_PATH, "rb") as f:
     eval_dataset = pickle.load(f)
@@ -112,6 +119,8 @@ with open(FINAL_TEST, "rb") as f:
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)
 test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=True, num_workers=2)
+train_loader_2 = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)
+test_loader_2 = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=True, num_workers=2)
 eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=len(eval_dataset), shuffle=False, num_workers=2)
 final_loader = torch.utils.data.DataLoader(final_dataset, batch_size=len(final_dataset), shuffle=False, num_workers=2)
 
@@ -149,6 +158,7 @@ def divide_eval(dataset, class_num):
 
 if __name__ == '__main__':
 
+    # Another Half
     state_dict = torch.load(SHADOW_MODEL_PATH, map_location=device)
     shadow_model.load_state_dict(state_dict)
     # Generate dataset for attack model
@@ -178,6 +188,36 @@ if __name__ == '__main__':
         members_divided[i] = in_member_divided[i] + out_member_divided[i]
     input_data_all, labels_all = prepare_dataset(members_divided, CLASS_NUM)
 
+    # Original Half
+    state_dict = torch.load(SHADOW_MODEL_PATH_2, map_location=device)
+    shadow_model.load_state_dict(state_dict)
+    # Generate dataset for attack model
+    shadow_model.eval()
+    with torch.no_grad():
+        in_member_all = []
+        for data in train_loader:
+            images, labels = data[0].to(device), data[1].to(device)
+            outputs = shadow_model(images)
+            for i in range(len(outputs)):
+                in_member_all.append([outputs[i], labels[i], 1])
+        
+        out_member_all = []
+        for data in test_loader:
+            images, labels = data[0].to(device), data[1].to(device)
+            outputs = shadow_model(images)
+            for i in range(len(outputs)):
+                out_member_all.append([outputs[i], labels[i], 0])
+        
+        # print(len(in_member_all), in_member_all[0][0], in_member_all[0][1], in_member_all[0][2])
+        # print(len(out_member_all), out_member_all[0][0], out_member_all[0][1], out_member_all[0][2])
+
+    in_member_divided = divide(in_member_all, CLASS_NUM)
+    out_member_divided = divide(out_member_all, CLASS_NUM)
+    members_divided = [[] for i in range(CLASS_NUM)]
+    for i in range(CLASS_NUM):
+        members_divided[i] = in_member_divided[i] + out_member_divided[i]
+    input_data_all_2, labels_all_2 = prepare_dataset(members_divided, CLASS_NUM)
+
     # Training loop for each attack model
     not_good = True
     while not_good:
@@ -200,11 +240,20 @@ if __name__ == '__main__':
                 
                 input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
                 labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
+                
+                input_data_2 = torch.tensor(input_data_all_2[idx], dtype=torch.float32).to(device)
+                labels_2 = torch.tensor(labels_all_2[idx], dtype=torch.float32).to(device)
 
                 # Forward pass
                 model.train()
                 outputs = model(input_data)
                 loss = criterion(outputs, labels)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                
+                outputs_2 = model(input_data_2)
+                loss = criterion(outputs_2, labels_2)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()

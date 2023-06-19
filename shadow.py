@@ -41,18 +41,18 @@ else:
 with open(DATA_PATH, "rb") as f:
     all_dataset = pickle.load(f)
 
-train_dataset, test_dataset = train_test_split(all_dataset, test_size=0.5)
+# train_dataset, test_dataset = train_test_split(all_dataset, test_size=0.5)
 
-with open(TRAIN_DATA_PATH, 'wb') as file:
-    pickle.dump(train_dataset, file)
+# with open(TRAIN_DATA_PATH, 'wb') as file:
+#     pickle.dump(train_dataset, file)
 
-with open(TEST_DATA_PATH, 'wb') as file:
-    pickle.dump(test_dataset, file)
+# with open(TEST_DATA_PATH, 'wb') as file:
+#     pickle.dump(test_dataset, file)
 
-with open(TRAIN_DATA_PATH, "rb") as f:
+with open(TEST_DATA_PATH, "rb") as f: # Another Half
     train_dataset = pickle.load(f)
 
-with open(TEST_DATA_PATH, "rb") as f:
+with open(TRAIN_DATA_PATH, "rb") as f: # Another Half
     test_dataset = pickle.load(f)
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)
