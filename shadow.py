@@ -19,21 +19,21 @@ else:
     idx = int(sys.argv[1])
     num_epochs = int(sys.argv[2])
 
-settings = [['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow_2.pth', 
+settings = [['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow_1.pth', 
              '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p', 10, 0],
-             ['../pickle/cifar10/mobilenetv2/shadow.p', '../models/mobilenetv2_cifar10_shadow_2.pth', 
+             ['../pickle/cifar10/mobilenetv2/shadow.p', '../models/mobilenetv2_cifar10_shadow_1.pth', 
              '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p', 10, 1],
-             ['../pickle/tinyimagenet/resnet34/shadow.p', '../models/resnet34_tinyimagenet_shadow_2.pth', 
+             ['../pickle/tinyimagenet/resnet34/shadow.p', '../models/resnet34_tinyimagenet_shadow_1.pth', 
              '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p', 200, 0],
-             ['../pickle/tinyimagenet/mobilenetv2/shadow.p', '../models/mobilenetv2_tinyimagenet_shadow_2.pth', 
+             ['../pickle/tinyimagenet/mobilenetv2/shadow.p', '../models/mobilenetv2_tinyimagenet_shadow_1.pth', 
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p', 200, 1],
-             ['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow.pth', 
+             ['../pickle/cifar10/resnet34/shadow.p', '../models/resnet34_cifar10_shadow_2.pth', 
              '../pickle/cifar10/resnet34/shadow_test.p', '../pickle/cifar10/resnet34/shadow_train.p', 10, 0],
-             ['../pickle/cifar10/mobilenetv2/shadow.p', '../models/mobilenetv2_cifar10_shadow.pth', 
+             ['../pickle/cifar10/mobilenetv2/shadow.p', '../models/mobilenetv2_cifar10_shadow_2.pth', 
              '../pickle/cifar10/mobilenetv2/shadow_test.p', '../pickle/cifar10/mobilenetv2/shadow_train.p', 10, 1],
-             ['../pickle/tinyimagenet/resnet34/shadow.p', '../models/resnet34_tinyimagenet_shadow.pth', 
+             ['../pickle/tinyimagenet/resnet34/shadow.p', '../models/resnet34_tinyimagenet_shadow_2.pth', 
              '../pickle/tinyimagenet/resnet34/shadow_test.p', '../pickle/tinyimagenet/resnet34/shadow_train.p', 200, 0],
-             ['../pickle/tinyimagenet/mobilenetv2/shadow.p', '../models/mobilenetv2_tinyimagenet_shadow.pth', 
+             ['../pickle/tinyimagenet/mobilenetv2/shadow.p', '../models/mobilenetv2_tinyimagenet_shadow_2.pth', 
              '../pickle/tinyimagenet/mobilenetv2/shadow_test.p', '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', 200, 1]]
 
 DATA_PATH = settings[idx][0]
@@ -45,8 +45,6 @@ if settings[idx][5] == 0:
     model = resnet34(pretrained=False, num_classes=num_c).to(device)
 else:
     model = mobilenet_v2(pretrained=False, num_classes=num_c).to(device)
-
-
 
 if idx >= 0 and idx <= 3:
     with open(DATA_PATH, "rb") as f:

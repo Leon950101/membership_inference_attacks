@@ -58,32 +58,44 @@ if len(sys.argv) > 2 or len(sys.argv) < 2:
 else:
     idx = int(sys.argv[1])
 
-settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shadow.pth',
-             '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p',
+settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shadow_3.pth',
+             '../pickle/cifar10/resnet34/shadow_train_2.p', '../pickle/cifar10/resnet34/shadow_test_2.p',
              '../pickle/cifar10/resnet34/eval.p', '../pickle/cifar10/resnet34/test.p', 10, 0,
-             '../results/task0_resnet34_cifar10.npy', 75, '../models/resnet34_cifar10_shadow_2.pth', 100, 1],
-             ['../models/mobilenetv2_cifar10.pth', '../models/mobilenetv2_cifar10_shadow.pth',
-             '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
+             '../results/task0_resnet34_cifar10.npy', 75, '../models/resnet34_cifar10_shadow_4.pth', 100, 1,
+             '../pickle/cifar10/resnet34/shadow_train.p', '../pickle/cifar10/resnet34/shadow_test.p',
+             '../models/resnet34_cifar10_shadow_1.pth', '../models/resnet34_cifar10_shadow_2.pth'],
+             ['../models/mobilenetv2_cifar10.pth', '../models/mobilenetv2_cifar10_shadow_3.pth',
+             '../pickle/cifar10/mobilenetv2/shadow_train_2.p', '../pickle/cifar10/mobilenetv2/shadow_test_2.p',
              '../pickle/cifar10/mobilenetv2/eval.p', '../pickle/cifar10/mobilenetv2/test.p', 10, 1,
-             '../results/task1_mobilenetv2_cifar10.npy', 73, '../models/mobilenetv2_cifar10_shadow_2.pth', 100, 1],
-             ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow.pth',
-             '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
+             '../results/task1_mobilenetv2_cifar10.npy', 73, '../models/mobilenetv2_cifar10_shadow_4.pth', 100, 1,
+            '../pickle/cifar10/mobilenetv2/shadow_train.p', '../pickle/cifar10/mobilenetv2/shadow_test.p',
+            '../models/mobilenetv2_cifar10_shadow_1.pth', '../models/mobilenetv2_cifar10_shadow_2.pth'],
+             ['../models/resnet34_tinyimagenet.pth', '../models/resnet34_tinyimagenet_shadow_3.pth',
+             '../pickle/tinyimagenet/resnet34/shadow_train_2.p', '../pickle/tinyimagenet/resnet34/shadow_test_2.p',
              '../pickle/tinyimagenet/resnet34/eval.p', '../pickle/tinyimagenet/resnet34/test.p',  200, 0,
-             '../results/task2_resnet34_tinyimagenet.npy', 95, '../models/resnet34_tinyimagenet_shadow_2.pth', 10, 50],
-             ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
-             '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
+             '../results/task2_resnet34_tinyimagenet.npy', 95, '../models/resnet34_tinyimagenet_shadow_4.pth', 10, 50,
+             '../pickle/tinyimagenet/resnet34/shadow_train.p', '../pickle/tinyimagenet/resnet34/shadow_test.p',
+             '../models/resnet34_tinyimagenet_shadow_1.pth', '../models/resnet34_tinyimagenet_shadow_2.pth'],
+             ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow_3.pth',
+             '../pickle/tinyimagenet/mobilenetv2/shadow_train_2.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test_2.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
-             '../results/task3_mobilenetv2_tinyimagenet.npy', 84.5, '../models/mobilenetv2_tinyimagenet_shadow_2.pth', 3, 50]
+             '../results/task3_mobilenetv2_tinyimagenet.npy', 84.5, '../models/mobilenetv2_tinyimagenet_shadow_4.pth', 3, 50,
+             '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
+             '../models/mobilenetv2_tinyimagenet_shadow_1.pth', '../models/mobilenetv2_tinyimagenet_shadow_2.pth']
              ]
 
 # 68% 65% 90% 80%
 TARGET_MODEL_PATH = settings[idx][0]
-SHADOW_MODEL_PATH = settings[idx][1]
-TRAIN_DATA_PATH = settings[idx][2]
-TEST_DATA_PATH = settings[idx][3]
+SHADOW_MODEL_PATH_1 = settings[idx][15]
+SHADOW_MODEL_PATH_2 = settings[idx][16]
+SHADOW_MODEL_PATH_3 = settings[idx][1]
+SHADOW_MODEL_PATH_4 = settings[idx][10]
+TRAIN_DATA_PATH = settings[idx][13]
+TEST_DATA_PATH = settings[idx][14]
+TRAIN_DATA_PATH_2 = settings[idx][2]
+TEST_DATA_PATH_2 = settings[idx][3]
 EVAL_DATA_PATH = settings[idx][4]
 FINAL_TEST = settings[idx][5]
-
 CLASS_NUM = settings[idx][6]
 
 if settings[idx][7] == 0:
@@ -95,21 +107,32 @@ else:
 
 SAVE_NAME = settings[idx][8]
 BEST_ACC = settings[idx][9]
-SHADOW_MODEL_PATH_2 = settings[idx][10]
 num_epochs = settings[idx][11]
 label_divide = settings[idx][12]
 
-with open(TRAIN_DATA_PATH, "rb") as f: # Another Half
-    test_dataset = pickle.load(f)
+with open(TRAIN_DATA_PATH, "rb") as f: 
+    train_dataset_1 = pickle.load(f)
+    
+with open(TEST_DATA_PATH, "rb") as f: 
+    test_dataset_1 = pickle.load(f)
 
-with open(TEST_DATA_PATH, "rb") as f: # Another Half
-    train_dataset = pickle.load(f)
+with open(TRAIN_DATA_PATH, "rb") as f: 
+    test_dataset_2 = pickle.load(f)
 
-with open(TRAIN_DATA_PATH, "rb") as f: # Original Half
+with open(TEST_DATA_PATH, "rb") as f: 
     train_dataset_2 = pickle.load(f)
 
-with open(TEST_DATA_PATH, "rb") as f: # Original Half
-    test_dataset_2 = pickle.load(f)
+with open(TRAIN_DATA_PATH_2, "rb") as f: 
+    train_dataset_3 = pickle.load(f)
+
+with open(TRAIN_DATA_PATH_2, "rb") as f: 
+    test_dataset_4 = pickle.load(f)
+
+with open(TEST_DATA_PATH_2, "rb") as f: 
+    test_dataset_3 = pickle.load(f)
+
+with open(TEST_DATA_PATH_2, "rb") as f: 
+    train_dataset_4 = pickle.load(f)
 
 with open(EVAL_DATA_PATH, "rb") as f:
     eval_dataset = pickle.load(f)
@@ -117,10 +140,15 @@ with open(EVAL_DATA_PATH, "rb") as f:
 with open(FINAL_TEST, "rb") as f:
     final_dataset = pickle.load(f)
 
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=2)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=128, shuffle=True, num_workers=2)
+train_loader_1 = torch.utils.data.DataLoader(train_dataset_1, batch_size=128, shuffle=True, num_workers=2)
+test_loader_1 = torch.utils.data.DataLoader(test_dataset_1, batch_size=128, shuffle=True, num_workers=2)
 train_loader_2 = torch.utils.data.DataLoader(train_dataset_2, batch_size=128, shuffle=True, num_workers=2)
 test_loader_2 = torch.utils.data.DataLoader(test_dataset_2, batch_size=128, shuffle=True, num_workers=2)
+train_loader_3 = torch.utils.data.DataLoader(train_dataset_3, batch_size=128, shuffle=True, num_workers=2)
+test_loader_3 = torch.utils.data.DataLoader(test_dataset_3, batch_size=128, shuffle=True, num_workers=2)
+train_loader_4 = torch.utils.data.DataLoader(train_dataset_4, batch_size=128, shuffle=True, num_workers=2)
+test_loader_4 = torch.utils.data.DataLoader(test_dataset_4, batch_size=128, shuffle=True, num_workers=2)
+
 eval_loader = torch.utils.data.DataLoader(eval_dataset, batch_size=len(eval_dataset), shuffle=False, num_workers=2)
 final_loader = torch.utils.data.DataLoader(final_dataset, batch_size=len(final_dataset), shuffle=False, num_workers=2)
 
@@ -158,65 +186,42 @@ def divide_eval(dataset, class_num):
 
 if __name__ == '__main__':
 
-    # Another Half
-    state_dict = torch.load(SHADOW_MODEL_PATH, map_location=device)
-    shadow_model.load_state_dict(state_dict)
-    # Generate dataset for attack model
-    shadow_model.eval()
-    with torch.no_grad():
-        in_member_all = []
-        for data in train_loader:
-            images, labels = data[0].to(device), data[1].to(device)
-            outputs = shadow_model(images)
-            for i in range(len(outputs)):
-                in_member_all.append([outputs[i], labels[i], 1])
-        
-        out_member_all = []
-        for data in test_loader:
-            images, labels = data[0].to(device), data[1].to(device)
-            outputs = shadow_model(images)
-            for i in range(len(outputs)):
-                out_member_all.append([outputs[i], labels[i], 0])
-        
-        # print(len(in_member_all), in_member_all[0][0], in_member_all[0][1], in_member_all[0][2])
-        # print(len(out_member_all), out_member_all[0][0], out_member_all[0][1], out_member_all[0][2])
+    shadow_set = [SHADOW_MODEL_PATH_1, SHADOW_MODEL_PATH_2, SHADOW_MODEL_PATH_3, SHADOW_MODEL_PATH_4]
+    train_data_set = [train_loader_1, train_loader_2, train_loader_3, train_loader_4]
+    test_data_set = [test_loader_1, test_loader_2, test_loader_3, test_loader_4]
+    input_data_set = []
+    labels_set = []
+    for i in range(len(shadow_set)):
+        state_dict = torch.load(shadow_set[i], map_location=device)
+        shadow_model.load_state_dict(state_dict)
+        # Generate dataset for attack model
+        shadow_model.eval()
+        with torch.no_grad():
+            in_member_all = []
+            for data in train_data_set[i]:
+                images, labels = data[0].to(device), data[1].to(device)
+                outputs = shadow_model(images)
+                for i in range(len(outputs)):
+                    in_member_all.append([outputs[i], labels[i], 1])
+            
+            out_member_all = []
+            for data in test_data_set[i]:
+                images, labels = data[0].to(device), data[1].to(device)
+                outputs = shadow_model(images)
+                for i in range(len(outputs)):
+                    out_member_all.append([outputs[i], labels[i], 0])
+            
+            # print(len(in_member_all), in_member_all[0][0], in_member_all[0][1], in_member_all[0][2])
+            # print(len(out_member_all), out_member_all[0][0], out_member_all[0][1], out_member_all[0][2])
 
-    in_member_divided = divide(in_member_all, CLASS_NUM)
-    out_member_divided = divide(out_member_all, CLASS_NUM)
-    members_divided = [[] for i in range(CLASS_NUM)]
-    for i in range(CLASS_NUM):
-        members_divided[i] = in_member_divided[i] + out_member_divided[i]
-    input_data_all, labels_all = prepare_dataset(members_divided, CLASS_NUM)
-
-    # Original Half
-    state_dict = torch.load(SHADOW_MODEL_PATH_2, map_location=device)
-    shadow_model.load_state_dict(state_dict)
-    # Generate dataset for attack model
-    shadow_model.eval()
-    with torch.no_grad():
-        in_member_all = []
-        for data in train_loader_2:
-            images, labels = data[0].to(device), data[1].to(device)
-            outputs = shadow_model(images)
-            for i in range(len(outputs)):
-                in_member_all.append([outputs[i], labels[i], 1])
-        
-        out_member_all = []
-        for data in test_loader_2:
-            images, labels = data[0].to(device), data[1].to(device)
-            outputs = shadow_model(images)
-            for i in range(len(outputs)):
-                out_member_all.append([outputs[i], labels[i], 0])
-        
-        # print(len(in_member_all), in_member_all[0][0], in_member_all[0][1], in_member_all[0][2])
-        # print(len(out_member_all), out_member_all[0][0], out_member_all[0][1], out_member_all[0][2])
-
-    in_member_divided = divide(in_member_all, CLASS_NUM)
-    out_member_divided = divide(out_member_all, CLASS_NUM)
-    members_divided = [[] for i in range(CLASS_NUM)]
-    for i in range(CLASS_NUM):
-        members_divided[i] = in_member_divided[i] + out_member_divided[i]
-    input_data_all_2, labels_all_2 = prepare_dataset(members_divided, CLASS_NUM)
+        in_member_divided = divide(in_member_all, CLASS_NUM)
+        out_member_divided = divide(out_member_all, CLASS_NUM)
+        members_divided = [[] for i in range(CLASS_NUM)]
+        for i in range(CLASS_NUM):
+            members_divided[i] = in_member_divided[i] + out_member_divided[i]
+        input_data_all, labels_all = prepare_dataset(members_divided, CLASS_NUM)
+        input_data_set.append(input_data_all)
+        labels_set.append(labels_all)
 
     # Training loop for each attack model
     not_good = True
@@ -237,28 +242,18 @@ if __name__ == '__main__':
                 criterion = nn.BCELoss()
                 optimizer = optim.Adam(params=model.parameters(), lr=0.001)
                 loss = 0.0
-
-                input_data = torch.tensor(input_data_all[idx], dtype=torch.float32).to(device)
-                labels = torch.tensor(labels_all[idx], dtype=torch.float32).to(device)
-                
-                input_data_2 = torch.tensor(input_data_all_2[idx], dtype=torch.float32).to(device)
-                labels_2 = torch.tensor(labels_all_2[idx], dtype=torch.float32).to(device)
-
                 model.train()
-                # Forward pass
-                # Another Half
-                outputs = model(input_data)
-                loss = criterion(outputs, labels)
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                for i in range(len(input_data_set)):
+
+                    input_data = torch.tensor(input_data_set[i][idx], dtype=torch.float32).to(device)
+                    labels = torch.tensor(labels_set[i][idx], dtype=torch.float32).to(device)
                 
-                # Original Half
-                outputs_2 = model(input_data_2)
-                loss = criterion(outputs_2, labels_2)
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                    # Forward pass
+                    outputs = model(input_data)
+                    loss = criterion(outputs, labels)
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
 
             # Target Model
             state_dict = torch.load(TARGET_MODEL_PATH, map_location=device)
