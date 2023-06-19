@@ -73,7 +73,7 @@ settings = [['../models/resnet34_cifar10.pth', '../models/resnet34_cifar10_shado
              ['../models/mobilenetv2_tinyimagenet.pth', '../models/mobilenetv2_tinyimagenet_shadow.pth',
              '../pickle/tinyimagenet/mobilenetv2/shadow_train.p', '../pickle/tinyimagenet/mobilenetv2/shadow_test.p',
              '../pickle/tinyimagenet/mobilenetv2/eval.p', '../pickle/tinyimagenet/mobilenetv2/test.p', 200, 1,
-             '../results/task3_mobilenetv2_tinyimagenet.npy', 82.5, '../models/mobilenetv2_tinyimagenet_shadow_2.pth', 3, 50]
+             '../results/task3_mobilenetv2_tinyimagenet.npy', 84.5, '../models/mobilenetv2_tinyimagenet_shadow_2.pth', 3, 50]
              ]
 
 # 68% 65% 90% 80%
